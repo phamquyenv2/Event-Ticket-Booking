@@ -1,0 +1,568 @@
+openapi: 3.0.3
+info:
+  title: GeekTicket API Specifications
+  description: OpenAPI 3.0 documentation for GeekTicket concert booking and operational management system.
+  version: 1.0.0
+  contact:
+    name: Antigravity Engineering Team
+servers:
+  - url: http://localhost:8080
+    description: Local Development Server
+
+paths:
+  /actuator/health:
+    get:
+      summary: Health Check
+      description: Check application status
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+
+  /api/v1/concerts:
+    get:
+      summary: List Published Concerts
+      description: Retrieve paginated list of published concerts for customers
+      tags:
+        - Customer Concerts
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponsePageConcertSummary'
+
+  /api/v1/concerts/{id}:
+    get:
+      summary: Get Concert Detail
+      description: Retrieve detailed information of a published concert including ticket categories
+      tags:
+        - Customer Concerts
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Successful retrieval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseConcertDetail'
+        '404':
+          description: Concert not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/operations/concerts:
+    post:
+      summary: Create Draft Concert
+      description: Operator creates a new draft concert
+      tags:
+        - Operation Concerts
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConcertRequest'
+      responses:
+        '201':
+          description: Concert created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseConcertDetail'
+
+  /api/v1/operations/concerts/{id}/ticket-categories:
+    post:
+      summary: Add Ticket Category
+      description: Operator adds a ticket category to a draft concert
+      tags:
+        - Operation Concerts
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTicketCategoryRequest'
+      responses:
+        '201':
+          description: Ticket category added successfully
+
+  /api/v1/operations/concerts/{id}/publish:
+    patch:
+      summary: Publish Concert
+      description: Operator publishes a draft concert to make it open for sale
+      tags:
+        - Operation Concerts
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Concert published successfully
+
+  /api/v1/bookings:
+    post:
+      summary: Create Booking
+      description: Customer creates a ticket reservation with optional voucher code
+      tags:
+        - Customer Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-User-Id'
+        - $ref: '#/components/parameters/Idempotency-Key'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully (RESERVED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseBooking'
+        '409':
+          description: Insufficient ticket quantity, voucher usage limit reached, or idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseError'
+
+  /api/v1/bookings/{bookingCode}:
+    get:
+      summary: Get Booking Details by Code
+      description: Customer views booking details using unique booking code
+      tags:
+        - Customer Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-User-Id'
+        - name: bookingCode
+          in: path
+          required: true
+          schema:
+            type: string
+            example: BK-20260804-A1B2C3
+      responses:
+        '200':
+          description: Booking details retrieved
+        '404':
+          description: Booking not found or does not belong to user
+
+  /api/v1/bookings/{bookingId}/cancel:
+    post:
+      summary: Cancel Booking
+      description: Customer cancels a RESERVED booking, restoring inventory and voucher usage
+      tags:
+        - Customer Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-User-Id'
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelBookingRequest'
+      responses:
+        '200':
+          description: Booking cancelled successfully
+
+  /api/v1/operations/bookings:
+    get:
+      summary: List All Bookings (Operator)
+      description: Operator views and filters bookings with dynamic search options
+      tags:
+        - Operation Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+        - name: concertId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [RESERVED, CONFIRMED, CANCELLED, EXPIRED, FAILED]
+        - name: suspicious
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of bookings for operation
+
+  /api/v1/operations/bookings/{bookingId}:
+    get:
+      summary: Get Booking Detail & Audit History (Operator)
+      description: Operator views detailed booking information along with full status change history
+      tags:
+        - Operation Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Detailed operation booking information
+
+  /api/v1/operations/bookings/{bookingId}/status:
+    patch:
+      summary: Update Booking Status (Operator)
+      description: Operator transitions booking status (e.g. RESERVED -> CONFIRMED) with reason
+      tags:
+        - Operation Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingStatusRequest'
+      responses:
+        '200':
+          description: Status updated successfully
+        '409':
+          description: Invalid booking status transition
+
+  /api/v1/operations/bookings/{bookingId}/suspicious:
+    patch:
+      summary: Update Suspicious Flag (Operator)
+      description: Operator marks or unmarks a booking as suspicious (fraud detection)
+      tags:
+        - Operation Bookings
+      parameters:
+        - $ref: '#/components/parameters/X-Operator-Id'
+        - name: bookingId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSuspiciousRequest'
+      responses:
+        '200':
+          description: Suspicious flag updated successfully
+
+components:
+  parameters:
+    X-User-Id:
+      name: X-User-Id
+      in: header
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 1
+      description: Customer User ID Header
+    X-Operator-Id:
+      name: X-Operator-Id
+      in: header
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 3
+      description: Operator User ID Header
+    Idempotency-Key:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: e8b9f4a1-02c3-4d5e-9f8a-1b2c3d4e5f6a
+      description: Unique Client Idempotency Key
+
+  schemas:
+    CreateConcertRequest:
+      type: object
+      required:
+        - title
+        - totalCapacity
+        - saleStartTime
+        - saleEndTime
+        - concertStartTime
+      properties:
+        title:
+          type: string
+          example: Sơn Tùng MTP - Sky Tour 2027
+        description:
+          type: string
+          example: Đêm nhạc hoành tráng nhất năm
+        venue:
+          type: string
+          example: Nhà Thi Đấu Phú Thọ, TP.HCM
+        totalCapacity:
+          type: integer
+          example: 1000
+        saleStartTime:
+          type: string
+          format: date-time
+          example: '2027-01-01T00:00:00Z'
+        saleEndTime:
+          type: string
+          format: date-time
+          example: '2027-06-01T00:00:00Z'
+        concertStartTime:
+          type: string
+          format: date-time
+          example: '2027-07-01T00:00:00Z'
+
+    CreateTicketCategoryRequest:
+      type: object
+      required:
+        - name
+        - price
+        - totalQuantity
+        - maxQuantityPerBooking
+      properties:
+        name:
+          type: string
+          example: VIP Ngồi Hàng Đầu
+        description:
+          type: string
+          example: Hàng ghế VIP sát sân khấu
+        price:
+          type: number
+          example: 1500000
+        totalQuantity:
+          type: integer
+          example: 100
+        maxQuantityPerBooking:
+          type: integer
+          example: 4
+
+    CreateBookingRequest:
+      type: object
+      required:
+        - concertId
+        - items
+      properties:
+        concertId:
+          type: integer
+          format: int64
+          example: 1
+        voucherCode:
+          type: string
+          example: WELCOME2026
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BookingItemRequest'
+
+    BookingItemRequest:
+      type: object
+      required:
+        - ticketCategoryId
+        - quantity
+      properties:
+        ticketCategoryId:
+          type: integer
+          format: int64
+          example: 1
+        quantity:
+          type: integer
+          example: 2
+
+    CancelBookingRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          example: Đổi ý rồi, hẹn show sau nha
+
+    UpdateBookingStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [CONFIRMED, CANCELLED]
+          example: CONFIRMED
+        reason:
+          type: string
+          example: Đã kiểm tra chuyển khoản thành công
+
+    UpdateSuspiciousRequest:
+      type: object
+      required:
+        - suspicious
+      properties:
+        suspicious:
+          type: boolean
+          example: true
+        reason:
+          type: string
+          example: Phát hiện hành vi mua vé bất thường
+
+    ApiResponseBooking:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 201
+        message:
+          type: string
+          example: Booking created successfully
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 10
+            bookingCode:
+              type: string
+              example: BK-20260804-X9Y8Z7
+            status:
+              type: string
+              example: RESERVED
+            totalAmount:
+              type: number
+              example: 2700000
+
+    ApiResponseConcertDetail:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            title:
+              type: string
+              example: World Tour 2026 Live in HCMC
+            status:
+              type: string
+              example: PUBLISHED
+
+    ApiResponsePageConcertSummary:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+        data:
+          type: object
+          properties:
+            content:
+              type: array
+              items:
+                type: object
+            pageNumber:
+              type: integer
+              example: 0
+            pageSize:
+              type: integer
+              example: 10
+            totalElements:
+              type: integer
+              example: 1
+
+    ApiResponseError:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 409
+        message:
+          type: string
+          example: Insufficient ticket quantity
+        code:
+          type: string
+          example: INSUFFICIENT_TICKET_QUANTITY
