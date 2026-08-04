@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-GeekticketApplication<geekticket>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.quyen.geekticket.GeekticketApplication",
+            "projectName": "geekticket",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
