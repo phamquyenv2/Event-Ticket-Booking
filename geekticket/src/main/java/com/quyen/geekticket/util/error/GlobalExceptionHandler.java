@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
 
@@ -40,6 +41,15 @@ public class GlobalExceptionHandler {
             MissingRequestHeaderException ex, HttpServletRequest request) {
         ErrorResponse response = ErrorResponse.of(
                 ErrorCode.VALIDATION_ERROR, ex.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
+        String msg = String.format("Invalid parameter '%s': %s", ex.getName(), ex.getValue());
+        ErrorResponse response = ErrorResponse.of(
+                ErrorCode.VALIDATION_ERROR, msg, request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 

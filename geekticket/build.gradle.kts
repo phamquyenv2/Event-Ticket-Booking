@@ -41,6 +41,8 @@ dependencies {
 
 	// Test
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation(platform("org.testcontainers:testcontainers-bom:1.21.1"))
 	testImplementation("org.testcontainers:junit-jupiter")
