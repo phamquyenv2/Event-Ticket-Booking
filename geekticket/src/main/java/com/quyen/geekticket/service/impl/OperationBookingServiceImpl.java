@@ -105,7 +105,6 @@ public class OperationBookingServiceImpl implements OperationBookingService {
             booking.confirm(actor, reason);
         } else if (newStatus == BookingStatus.CANCELLED) {
             booking.cancel(actor, reason, true);
-            // Restore inventory and voucher
             restoreInventoryAndVoucher(booking);
         } else if (newStatus == BookingStatus.EXPIRED) {
             booking.expire(reason);

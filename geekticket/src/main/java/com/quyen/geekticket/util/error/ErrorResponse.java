@@ -7,10 +7,6 @@ import lombok.Getter;
 
 import java.time.Instant;
 
-/**
- * Consistent error response matching checklist §11 contract:
- * { timestamp, status, code, message, path }
- */
 @Getter
 @Builder
 @AllArgsConstructor
