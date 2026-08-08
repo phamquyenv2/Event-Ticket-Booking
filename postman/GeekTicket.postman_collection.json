@@ -9,7 +9,7 @@
       "name": "00 Health",
       "item": [
         {
-          "name": "Health Check",
+          "name": "health check",
           "request": {
             "method": "GET",
             "header": [
@@ -49,7 +49,7 @@
       "name": "01 Concert Customer",
       "item": [
         {
-          "name": "List Published Concerts",
+          "name": "list published concerts",
           "request": {
             "method": "GET",
             "header": [
@@ -87,7 +87,7 @@
           ]
         },
         {
-          "name": "Get Concert Detail",
+          "name": "get concert detail",
           "request": {
             "method": "GET",
             "header": [
@@ -131,7 +131,7 @@
       "name": "02 Concert Operation",
       "item": [
         {
-          "name": "Create Concert",
+          "name": "create concert",
           "request": {
             "method": "POST",
             "header": [
@@ -184,7 +184,7 @@
           ]
         },
         {
-          "name": "Add Ticket Category",
+          "name": "add ticket category",
           "request": {
             "method": "POST",
             "header": [
@@ -239,7 +239,7 @@
           ]
         },
         {
-          "name": "Publish Concert",
+          "name": "publish concert",
           "request": {
             "method": "PATCH",
             "header": [
@@ -289,7 +289,7 @@
       "name": "03 Booking Happy Path",
       "item": [
         {
-          "name": "New Request - Create Booking Without Voucher",
+          "name": "create booking without voucher",
           "request": {
             "method": "POST",
             "header": [
@@ -360,7 +360,7 @@
           ]
         },
         {
-          "name": "Get Booking By Code",
+          "name": "get booking by code",
           "request": {
             "method": "GET",
             "header": [
@@ -409,7 +409,7 @@
       "name": "04 Idempotency",
       "item": [
         {
-          "name": "Replay Same Idempotency Key",
+          "name": "replay same idempotency key",
           "request": {
             "method": "POST",
             "header": [
@@ -466,7 +466,7 @@
           ]
         },
         {
-          "name": "Same Key Different Payload",
+          "name": "same key different payload",
           "request": {
             "method": "POST",
             "header": [
@@ -527,7 +527,7 @@
       "name": "05 Voucher",
       "item": [
         {
-          "name": "New Request - Create Booking With Voucher",
+          "name": "create booking with voucher",
           "request": {
             "method": "POST",
             "header": [
@@ -600,7 +600,7 @@
       "name": "06 Booking Cancellation",
       "item": [
         {
-          "name": "New Request - Create Booking For Cancel",
+          "name": "create booking for cancel",
           "request": {
             "method": "POST",
             "header": [
@@ -666,7 +666,7 @@
           ]
         },
         {
-          "name": "Cancel Booking",
+          "name": "cancel booking",
           "request": {
             "method": "POST",
             "header": [
@@ -724,7 +724,7 @@
       "name": "07 Operation Booking",
       "item": [
         {
-          "name": "List Operation Bookings",
+          "name": "list operation bookings",
           "request": {
             "method": "GET",
             "header": [
@@ -768,7 +768,7 @@
           ]
         },
         {
-          "name": "Operation Booking Detail",
+          "name": "operation booking detail",
           "request": {
             "method": "GET",
             "header": [
@@ -813,7 +813,7 @@
           ]
         },
         {
-          "name": "Update Status to CONFIRMED",
+          "name": "update status to confirmed",
           "request": {
             "method": "PATCH",
             "header": [
@@ -868,7 +868,7 @@
           ]
         },
         {
-          "name": "Invalid Transition CONFIRMED to RESERVED",
+          "name": "invalid transition confirmed to reserved",
           "request": {
             "method": "PATCH",
             "header": [
@@ -927,7 +927,7 @@
       "name": "08 Negative Cases",
       "item": [
         {
-          "name": "New Request - Insufficient Ticket Quantity",
+          "name": "booking limit exceeded",
           "request": {
             "method": "POST",
             "header": [
@@ -982,9 +982,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status 409\", () => pm.response.to.have.status(409));",
+                  "pm.test(\"Status 400\", () => pm.response.to.have.status(400));",
                   "const body = pm.response.json();",
-                  "pm.test(\"Error code\", () => pm.expect(body.code).to.eql(\"INSUFFICIENT_TICKET_QUANTITY\"));"
+                  "pm.test(\"Error code\", () => pm.expect(body.code).to.eql(\"BOOKING_LIMIT_EXCEEDED\"));"
                 ],
                 "type": "text/javascript"
               }
@@ -992,7 +992,7 @@
           ]
         },
         {
-          "name": "Missing Idempotency Key",
+          "name": "missing idempotency key",
           "request": {
             "method": "POST",
             "header": [
@@ -1041,7 +1041,7 @@
           ]
         },
         {
-          "name": "New Request - Voucher Already Used By User",
+          "name": "voucher already used by user",
           "request": {
             "method": "POST",
             "header": [
@@ -1106,7 +1106,7 @@
           ]
         },
         {
-          "name": "Non-Owner Cannot View Booking",
+          "name": "non-owner cannot view booking",
           "request": {
             "method": "GET",
             "header": [
